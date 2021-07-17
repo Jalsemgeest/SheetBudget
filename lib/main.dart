@@ -29,11 +29,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-  // Create a global key that uniquely identifies the Form widget
-  // and allows validation of the form.
-  //
-
+  // A simple array of the months of a year allowing us to use them for a dropdown
+  // and determine which month it is from the list.
   static const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  // Values that are represented in the UI and required for 'server' calls.
   var _currentlySelectedMonth = MONTHS[DateTime.now().month - 1];
   var _isExpense = true;
   var _monthlyExpenses = 0;
@@ -48,7 +48,6 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController feedbackController = TextEditingController();
 
   void _submitForm() {
-
     if(_formKey.currentState!.validate()){
       InputForm feedbackForm = InputForm(
           _currentlySelectedMonth,
@@ -60,24 +59,22 @@ class _MyHomePageState extends State<MyHomePage> {
       FormController formController = FormController((dynamic response){
         print("Response: $response");
         if(response['status'] == FormController.STATUS_SUCCESS){
-          //
+          // If we had a success then we want to update the snackbar.
           _showSnackbar(_isExpense ? "Expense Added" : "Income Added");
           setState(() {
-            if (_isExpense && _monthlyExpenses != 0) {
-              _monthlyExpenses += int.parse(valueController.text);
-            } else if (!_isExpense && _monthlyIncome != 0) {
-              _monthlyIncome += int.parse(valueController.text);
+            // We only want to increment these values if there were existing values.
+            if (_monthlyIncome != 0 || _monthlyExpenses != 0) {
+              if (_isExpense) {
+                _monthlyExpenses += int.parse(valueController.text);
+              } else {
+                _monthlyIncome += int.parse(valueController.text);
+              }
             }
           });
         } else {
           _showSnackbar("Error Occurred!");
         }
       });
-
-      _showSnackbar("Submitting Feedback");
-
-      // Submit 'feedbackForm' and save it in Google Sheet
-
       formController.submitForm(feedbackForm);
     }
   }
@@ -93,19 +90,12 @@ class _MyHomePageState extends State<MyHomePage> {
           _monthlyIncome = response['income'];
           _monthlyExpenses = response['expenses'];
         });
-        // if(response == FormController.STATUS_SUCCESS){
-        //   //
-        //   _showSnackbar("Feedback Submitted");
-        // } else {
-        //   _showSnackbar("Error Occurred!");
-        // }
       });
 
       formController.getTotals(totalsForm);
     }
   }
 
-  // Method to show snackbar with 'message'.
   _showSnackbar(String message) {
     final snackBar = SnackBar(content: Text(message));
     _scaffoldKey.currentState!.showSnackBar(snackBar);
